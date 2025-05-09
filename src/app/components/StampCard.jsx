@@ -2,41 +2,56 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import QRCode from 'qrcode.react';
+import QRCode from './QRCode';
 
-export default function StampCard({ guideName, qrValue }) {
-  const [flipped, setFlipped] = useState(false);
+const StampCard = ({ guideName, guideImage }) => {
+  const [isFlipped, setIsFlipped] = useState(false);
 
   return (
-    <div
-      className={`stamp-flip-container${flipped ? ' flipped' : ''}`}
-      onClick={() => setFlipped(!flipped)}
-      tabIndex={0}
-      style={{ outline: 'none' }}
-    >
-      <div className="stamp-flip-inner">
-        {/* Front */}
-        <div className="stamp-flip-front">
-          <div className="stamp-card-content">
-            <Image
-              src="/download.jpeg"
-              alt="Tour Guide"
-              width={180}
-              height={180}
-              className="stamp-guide-img"
-            />
-            <div className="stamp-guide-name">{guideName}</div>
-            <div className="stamp-brand">CHAPERONEME</div>
+    <div className="w-full max-w-md mx-auto perspective-1000">
+      <div 
+        className={`relative w-full h-[500px] transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}
+        onClick={() => setIsFlipped(!isFlipped)}
+      >
+        {/* Front of the card */}
+        <div className="absolute w-full h-full backface-hidden">
+          <div className="w-full h-full bg-white rounded-xl shadow-xl overflow-hidden border-4" style={{ borderColor: 'var(--brand-color)' }}>
+            <div className="relative h-2/3">
+              <Image
+                src={guideImage || "/download.jpeg"}
+                alt={guideName}
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div className="p-6 text-center">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">{guideName}</h2>
+              <div className="flex items-center justify-center space-x-2">
+                <span className="text-blue-600 font-semibold">ChaperoneMe</span>
+                <span className="text-gray-400">•</span>
+                <span className="text-gray-600">Licensed Tour Guide</span>
+              </div>
+            </div>
           </div>
         </div>
-        {/* Back */}
-        <div className="stamp-flip-back">
-          <div className="stamp-card-content flex-center" style={{height:'100%'}}>
-            <QRCode value={qrValue} size={140} bgColor="#E6E0D5" fgColor="#1B1B1B" level="H" includeMargin={true} />
-            <div className="stamp-verify-label">VERIFIED GUIDE</div>
+
+        {/* Back of the card */}
+        <div className="absolute w-full h-full backface-hidden rotate-y-180">
+          <div className="w-full h-full bg-white rounded-xl shadow-xl overflow-hidden border-4 p-6" style={{ borderColor: 'var(--brand-color)' }}>
+            <div className="flex flex-col items-center justify-center h-full">
+              <h3 className="text-2xl font-mono font-bold text-gray-800 mb-4">
+                Verify License
+              </h3>
+              <QRCode />
+              <p className="mt-4 text-sm text-gray-600 text-center">
+                Scan to verify this tour guide's license
+              </p>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-} 
+};
+
+export default StampCard; 

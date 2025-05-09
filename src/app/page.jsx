@@ -2,15 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import StampCard from './components/StampCard';
 
 export default function Home() {
   const [showForm, setShowForm] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [formData, setFormData] = useState({
+    ic: '',
     name: '',
     email: '',
     phone: '',
-    reason: ''
+    motac: null,
+    attachment: null,
+    type: '',
+    agencyName: '',
+    offerLetter: null,
   });
 
   useEffect(() => {
@@ -47,20 +53,35 @@ export default function Home() {
     });
   };
 
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    setFormData({
+      ...formData,
+      [name]: files[0],
+    });
+  };
+
   return (
     <main className="min-h-screen">
       {/* Navigation */}
       <nav className="flex justify-between items-center p-4 bg-[#1A2A3A]">
         <div className="flex items-center space-x-4">
           <a href="/" className="nav-link">HOME</a>
+          <a href="#about-us" className="nav-link">ABOUT US</a>
           <a href="#" className="nav-link" onClick={() => setShowForm(true)}>JOIN US TODAY</a>
         </div>
         <a href="#" className="nav-link">CONNECT</a>
       </nav>
 
       {/* Ticker Bar */}
-      <div className="ticker-bar text-center">
-        {formatDay(currentTime)} | DO YOU NOT NEED A CHAPERONE? CHAPERONEME IS HERE. | {formatTime(currentTime)}
+      <div className="ticker-bar-wrapper overflow-hidden whitespace-nowrap bg-[#E6E0D5]">
+        <div className="ticker-bar-inner inline-block animate-ticker">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <span className="mx-8" key={i}>
+              {formatDay(currentTime)} | DO YOU NOT NEED A CHAPERONE? CHAPERONEME IS HERE. | {formatTime(currentTime)}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Main Content */}
@@ -102,6 +123,22 @@ export default function Home() {
         </h1>
       </div>
 
+      {/* Tour Guide License Section */}
+      <div className="bg-gray-100 py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-mono font-bold text-center text-gray-800 mb-8">
+            Tour Guide License
+          </h2>
+          <StampCard 
+            guideName="Michael B. Jordan"
+            guideImage="/download.jpeg"
+          />
+          <p className="text-center text-gray-600 mt-4">
+            Click the card to authenticate
+          </p>
+        </div>
+      </div>
+
       {/* Popup Form */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -114,6 +151,15 @@ export default function Home() {
             </button>
             <h2 className="text-white text-xl mb-4 text-center">JOIN US TODAY</h2>
             <form onSubmit={handleSubmit}>
+              <input
+                type="text"
+                name="ic"
+                placeholder="IC Number"
+                className="form-input"
+                value={formData.ic}
+                onChange={handleChange}
+                required
+              />
               <input
                 type="text"
                 name="name"
@@ -141,22 +187,105 @@ export default function Home() {
                 onChange={handleChange}
                 required
               />
-              <textarea
-                name="reason"
-                placeholder="Why do you need a chaperone?"
+              <label className="block text-white mb-1 mt-2">Upload MOTAC License (PDF only)</label>
+              <input
+                type="file"
+                name="motac"
+                accept="application/pdf"
                 className="form-input"
-                value={formData.reason}
-                onChange={handleChange}
+                onChange={handleFileChange}
                 required
-                rows="4"
               />
-              <button type="submit" className="form-submit w-full">
+              <label className="block text-white mb-1 mt-2">Additional Attachment</label>
+              <input
+                type="file"
+                name="attachment"
+                className="form-input"
+                onChange={handleFileChange}
+              />
+              <div className="mt-4 mb-2">
+                <label className="text-white mr-4">Affiliation:</label>
+                <label className="mr-2">
+                  <input
+                    type="radio"
+                    name="type"
+                    value="agency"
+                    checked={formData.type === 'agency'}
+                    onChange={handleChange}
+                    required
+                  /> Travel Agency
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="type"
+                    value="freelance"
+                    checked={formData.type === 'freelance'}
+                    onChange={handleChange}
+                  /> Freelance
+                </label>
+              </div>
+              {formData.type === 'agency' && (
+                <>
+                  <input
+                    type="text"
+                    name="agencyName"
+                    placeholder="Agency Name"
+                    className="form-input"
+                    value={formData.agencyName}
+                    onChange={handleChange}
+                    required
+                  />
+                  <label className="block text-white mb-1 mt-2">Upload Offer Letter</label>
+                  <input
+                    type="file"
+                    name="offerLetter"
+                    className="form-input"
+                    onChange={handleFileChange}
+                    required
+                  />
+                </>
+              )}
+              <button type="submit" className="form-submit w-full mt-4">
                 Submit Verification Request
               </button>
             </form>
           </div>
         </div>
       )}
+
+      {/* About Us Section */}
+      <section id="about-us" className="max-w-3xl mx-auto my-16 px-4 py-4 bg-white bg-opacity-90 rounded-xl shadow-md">
+        <h2 className="text-2xl font-mono font-bold text-center text-blue-700 mb-4">About Us</h2>
+        <p className="font-baskerville text-xs text-gray-800 mb-2 text-justify">
+          At ChaperoneMe, we believe that every journey should be safe, enriching, and worry-free. Our mission is to empower travelers by connecting them with thoroughly vetted, passionate local guides who bring destinations to life with authenticity and expertise.
+        </p>
+        <p className="font-baskerville text-xs text-gray-700 mb-2 text-justify">
+          We understand that exploring new places can be daunting, especially when it comes to trust and safety. That's why our platform leverages digital ID verification, transparent ratings, and real-time credentials, ensuring that every guide you meet is both qualified and trustworthy.
+        </p>
+        <p className="font-baskerville text-xs text-gray-700 mb-2 text-justify">
+          Whether you're seeking a private tour, joining a group adventure, or simply looking for local insights, ChaperoneMe is your partner in creating memorable, secure travel experiences. Let us handle the logistics—so you can focus on discovery, connection, and adventure.
+        </p>
+        <p className="font-baskerville text-xs text-gray-900 font-semibold text-center mt-4">
+          Your journey, our commitment: safe, authentic travel—anywhere in the world.
+        </p>
+      </section>
+
+      {/* Twitter/X Social Media Link */}
+      <div className="flex flex-col items-center mt-12 mb-4">
+        <a
+          href="https://x.com/chaperoneTeam"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-col items-center text-gray-700 hover:text-blue-600"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2">
+            <path d="M22.162 5.656c-.793.352-1.645.59-2.54.698a4.48 4.48 0 0 0 1.962-2.475 8.94 8.94 0 0 1-2.828 1.082A4.48 4.48 0 0 0 11.07 9.03c0 .352.04.695.116 1.022C7.728 9.89 4.768 8.2 2.743 5.74a4.48 4.48 0 0 0-.607 2.254c0 1.555.792 2.927 2.002 3.732a4.48 4.48 0 0 1-2.03-.56v.057a4.48 4.48 0 0 0 3.6 4.393c-.193.053-.397.08-.607.08-.148 0-.292-.014-.432-.04a4.48 4.48 0 0 0 4.18 3.11A8.98 8.98 0 0 1 2 19.54a12.7 12.7 0 0 0 6.88 2.017c8.26 0 12.78-6.84 12.78-12.78 0-.195-.004-.39-.013-.583a9.14 9.14 0 0 0 2.24-2.338z" />
+          </svg>
+          <span className="text-sm font-mono">Follow us on X (Twitter)</span>
+          <span className="text-xs text-gray-400">@chaperoneTeam</span>
+        </a>
+      </div>
     </main>
   );
 } 
