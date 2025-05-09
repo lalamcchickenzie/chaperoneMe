@@ -22,6 +22,7 @@ const StampCard = ({ guideName, guideImage }) => {
                 alt={guideName}
                 fill
                 className="object-cover"
+                objectPosition="center top"
               />
             </div>
             <div className="p-6 text-center">

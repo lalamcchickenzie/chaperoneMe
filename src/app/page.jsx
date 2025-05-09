@@ -187,7 +187,7 @@ export default function Home() {
                 onChange={handleChange}
                 required
               />
-              <label className="block text-white mb-1 mt-2">Upload MOTAC License (PDF only)</label>
+              <label className="block text-white mb-1 mt-2">Upload tour guide's license (PDF only)</label>
               <input
                 type="file"
                 name="motac"
