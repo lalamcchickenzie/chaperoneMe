@@ -1,48 +1,40 @@
 'use client';
 
 import { useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
 import Image from 'next/image';
+import QRCode from 'qrcode.react';
 
-export default function StampCard({ guideName, guideImage, verificationUrl }) {
-  const [isFlipped, setIsFlipped] = useState(false);
+export default function StampCard({ guideName, qrValue }) {
+  const [flipped, setFlipped] = useState(false);
 
   return (
-    <div className="relative w-[300px] h-[400px] perspective-1000">
-      <div
-        className={`w-full h-full transition-transform duration-500 transform-style-3d ${
-          isFlipped ? 'rotate-y-180' : ''
-        }`}
-        onClick={() => setIsFlipped(!isFlipped)}
-      >
-        {/* Front of the card */}
-        <div className="absolute w-full h-full backface-hidden bg-white rounded-lg shadow-xl p-6 flex flex-col items-center">
-          <div className="relative w-48 h-48 mb-4 rounded-full overflow-hidden">
+    <div
+      className={`stamp-flip-container${flipped ? ' flipped' : ''}`}
+      onClick={() => setFlipped(!flipped)}
+      tabIndex={0}
+      style={{ outline: 'none' }}
+    >
+      <div className="stamp-flip-inner">
+        {/* Front */}
+        <div className="stamp-flip-front">
+          <div className="stamp-card-content">
             <Image
-              src={guideImage}
-              alt={guideName}
-              fill
-              className="object-cover"
+              src="/download.jpeg"
+              alt="Tour Guide"
+              width={180}
+              height={180}
+              className="stamp-guide-img"
             />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">{guideName}</h2>
-          <div className="mt-4 text-center">
-            <p className="text-xl font-semibold text-blue-600">CHAPERONEME</p>
-            <p className="text-sm text-gray-600 mt-1">Licensed Tour Guide</p>
+            <div className="stamp-guide-name">{guideName}</div>
+            <div className="stamp-brand">CHAPERONEME</div>
           </div>
         </div>
-
-        {/* Back of the card */}
-        <div className="absolute w-full h-full backface-hidden bg-white rounded-lg shadow-xl p-6 flex flex-col items-center justify-center rotate-y-180">
-          <div className="mb-4">
-            <QRCodeSVG
-              value={verificationUrl}
-              size={200}
-              level="H"
-              includeMargin={true}
-            />
+        {/* Back */}
+        <div className="stamp-flip-back">
+          <div className="stamp-card-content flex-center" style={{height:'100%'}}>
+            <QRCode value={qrValue} size={140} bgColor="#E6E0D5" fgColor="#1B1B1B" level="H" includeMargin={true} />
+            <div className="stamp-verify-label">VERIFIED GUIDE</div>
           </div>
-          <p className="text-sm text-gray-600 mt-4">Scan to verify authenticity</p>
         </div>
       </div>
     </div>

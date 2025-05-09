@@ -1,12 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #22344a;
-    color: #fff;
+    font-family: 'Noto Sans SC', 'LiSu', sans-serif;
+    background-color: var(--deep-navy);
+    color: #FFFFFF;
     line-height: 1.6;
   }
 }
@@ -33,6 +35,10 @@
   --brand-color: #2563eb;
   --brand-light: #eff6ff;
   --brand-dark: #1e40af;
+  --navy-blue: #2E3A50;
+  --deep-navy: #1A2A3A;
+  --parchment: #E6E0D5;
+  --charcoal: #1B1B1B;
 }
 
 /* CSS Reset */
@@ -71,4 +77,166 @@
 .bg-brand {
   background-color: var(--brand-color);
   color: white;
+}
+
+.nav-link {
+  color: #FFFFFF;
+  text-decoration: none;
+  padding: 0 1rem;
+  position: relative;
+}
+
+.nav-link:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 20px;
+  width: 1px;
+  background-color: #FFFFFF;
+}
+
+.ticker-bar {
+  background-color: var(--parchment);
+  color: var(--charcoal);
+  font-family: 'Courier New', monospace;
+  padding: 0.5rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.stamp-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: -2rem;
+  margin: 2rem 0;
+}
+
+.stamp {
+  filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.6));
+}
+
+.stamp-left, .stamp-right {
+  transform: scale(0.8);
+  opacity: 0.8;
+}
+
+.verification-card {
+  background-color: var(--navy-blue);
+  padding: 1.5rem;
+  border: 1px solid #FFFFFF;
+}
+
+.verification-form {
+  background-color: var(--navy-blue);
+  padding: 2rem;
+  border: 1px solid #FFFFFF;
+  max-width: 600px;
+  width: 90%;
+  margin: 2rem auto;
+  position: relative;
+}
+
+.form-input {
+  background-color: var(--parchment);
+  color: var(--charcoal);
+  border: 1px solid var(--charcoal);
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  font-family: 'Courier New', monospace;
+}
+
+.form-submit {
+  background-color: var(--charcoal);
+  color: var(--parchment);
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  transition: background-color 0.2s;
+}
+
+.form-submit:hover {
+  background-color: #2a2a2a;
+}
+
+/* Add smooth scrolling to the page */
+html {
+  scroll-behavior: smooth;
+}
+
+.stamp-flip-container {
+  width: 320px;
+  height: 420px;
+  perspective: 1200px;
+  margin: 2rem auto;
+  cursor: pointer;
+  display: inline-block;
+}
+.stamp-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.7s cubic-bezier(0.4,0.2,0.2,1);
+  transform-style: preserve-3d;
+}
+.stamp-flip-container.flipped .stamp-flip-inner {
+  transform: rotateY(180deg);
+}
+.stamp-flip-front, .stamp-flip-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  background: var(--parchment);
+  border: 2px solid #1B1B1B;
+  box-shadow: 0px 4px 16px rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'LiSu', 'Noto Sans SC', monospace;
+  border-radius: 0;
+}
+.stamp-flip-back {
+  transform: rotateY(180deg);
+}
+.stamp-card-content {
+  width: 90%;
+  margin: 0 auto;
+  text-align: center;
+}
+.stamp-guide-img {
+  border: 2px solid #1B1B1B;
+  box-shadow: 0px 4px 8px rgba(0,0,0,0.5);
+  margin-bottom: 1.5rem;
+  background: #fff;
+  object-fit: cover;
+}
+.stamp-guide-name {
+  font-size: 1.5rem;
+  color: #1B1B1B;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.05em;
+}
+.stamp-brand {
+  font-size: 1.1rem;
+  color: #2E3A50;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+}
+.stamp-verify-label {
+  margin-top: 1.5rem;
+  color: #1B1B1B;
+  font-size: 1.1rem;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  letter-spacing: 0.1em;
 }
