@@ -7,10 +7,13 @@ import Navbar from './components/Navbar';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
 import toast, { Toaster } from 'react-hot-toast';
-
+import * as anchor from '@coral-xyz/anchor';
+import { BN } from '@coral-xyz/anchor';
+import programIDL from '@/contract/idl.json';
+import { PROGRAM_ACCOUNT_ADDRESS } from '@/lib/config';
 // Main component that directly uses wallet context now
 export default function Home() {
-  const { publicKey } = useWallet();
+  const { publicKey, signTransaction } = useWallet();
   const [showForm, setShowForm] = useState(false);
   const [showWalletPrompt, setShowWalletPrompt] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -34,6 +37,30 @@ export default function Home() {
     offerLetter: null,
     walletAddress: '',
   });
+  const [transactionHash, setTransactionHash] = useState('');
+
+  // Create a connection and provider
+  const connection = new anchor.web3.Connection(anchor.web3.clusterApiUrl('devnet'));
+  const provider = publicKey && signTransaction ? new anchor.AnchorProvider(
+    connection,
+    {
+      publicKey,
+      signTransaction,
+      signAllTransactions: async (txs) => {
+        return await Promise.all(txs.map(tx => signTransaction(tx)));
+      },
+    },
+    { commitment: 'confirmed' }
+  ) : null;
+
+  // If provider exists, set it as the global provider
+  if (provider) {
+    anchor.setProvider(provider);
+  }
+
+  // Initialize the program with IDL
+  const programId = new anchor.web3.PublicKey(PROGRAM_ACCOUNT_ADDRESS);
+  const program = provider ? new anchor.Program(programIDL, provider) : null;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -139,6 +166,13 @@ export default function Home() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Check if wallet is connected
+    if (!publicKey || !signTransaction) {
+      toast.error('Please connect your wallet to submit verification.');
+      return;
+    }
+    
     setShowForm(false); // Hide form immediately for better UX
     
     // Create notification for the entire submission process
@@ -150,6 +184,19 @@ export default function Home() {
     // Upload files and submit to Solana program
     const processVerification = async () => {
       try {
+        // Validate form data before proceeding
+        if (!formData.ic || !formData.name || !formData.email || !formData.phone) {
+          throw new Error("Please fill all required fields");
+        }
+        
+        if (!formData.motac || !formData.photoId) {
+          throw new Error("License and Photo ID are required");
+        }
+        
+        if (formData.type === 'agency' && (!formData.agencyName || !formData.offerLetter)) {
+          throw new Error("Agency name and offer letter are required for agency affiliation");
+        }
+        
         setSubmissionStatus('uploading');
         toast.loading('Preparing files for upload...', {
           id: submissionToast
@@ -286,52 +333,173 @@ export default function Home() {
           license_uri: licenseUri,
           photo_id_uri: photoIdUri,
           attachment_uri: attachmentUri,
-          affiliation_type: formData.type === 'agency' ? 'Agency' : 'Freelance',
+          affiliation_type: formData.type === 'agency' ? { agency: {} } : { freelance: {} },
           agency_name: formData.type === 'agency' ? formData.agencyName : null,
           offer_letter_uri: offerLetterUri,
         };
+        
+        console.log("Submission data prepared:", submissionData);
         
         setSubmissionStatus('submitting');
         toast.loading('Submitting verification to blockchain...', {
           id: submissionToast
         });
         
-        // Simulate blockchain transaction time
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        if (!program) {
+          throw new Error("Program not initialized. Please connect your wallet.");
+        }
         
-        // This is where you would call your Solana program with the IPFS URIs
-        // Example: 
-        // await program.methods.submitVerification(
-        //   submissionData.ic_number,
-        //   submissionData.name,
-        //   submissionData.email,
-        //   submissionData.phone,
-        //   submissionData.wallet_address,
-        //   submissionData.license_uri,
-        //   submissionData.photo_id_uri,
-        //   submissionData.attachment_uri,
-        //   submissionData.affiliation_type === 'Agency' ? { agency: {} } : { freelance: {} },
-        //   submissionData.agency_name,
-        //   submissionData.offer_letter_uri
-        // ).accounts({
-        //   guideAccount: guideAccount,
-        //   adminAccount: adminAccount,
-        //   authority: publicKey,
-        //   systemProgram: web3.SystemProgram.programId,
-        // }).rpc();
+        // Derive the admin account PDA
+        const [adminAccount] = await anchor.web3.PublicKey.findProgramAddressSync(
+          [Buffer.from("admin")],
+          programId
+        );
         
-        // Success notification
-        console.log('Verification submitted successfully!');
-        setSubmissionStatus('success');
-        toast.success('Verification submitted successfully! Your application is now under review.', {
-          id: submissionToast,
-          duration: 5000
-        });
+        console.log("Admin account PDA:", adminAccount.toString());
         
+        // First fetch the admin account to get the current guides count
+        const adminAccountInfo = await program.account.adminAccount.fetch(adminAccount);
+        console.log("Admin account info:", adminAccountInfo);
+        console.log("Current guides count:", adminAccountInfo.guidesCount.toString());
+        
+        const [guideAccount] = await anchor.web3.PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("guide"), 
+            publicKey.toBuffer(), 
+            new BN(adminAccountInfo.guidesCount).toArrayLike(Buffer, 'le', 8)
+          ],
+          programId
+        );
+        
+        console.log("Guide account PDA:", guideAccount.toString());
+        
+        // Build the transaction instead of directly sending it
+        const transaction = await program.methods
+          .submitVerification(
+            submissionData.ic_number,
+            submissionData.name,
+            submissionData.email,
+            submissionData.phone,
+            submissionData.wallet_address,
+            submissionData.license_uri,
+            submissionData.photo_id_uri,
+            submissionData.attachment_uri,
+            submissionData.affiliation_type,
+            submissionData.agency_name,
+            submissionData.offer_letter_uri
+          )
+          .accounts({
+            guideAccount: guideAccount,
+            adminAccount: adminAccount,
+            authority: publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
+          })
+          .transaction();
+        
+        // Get a recent blockhash
+        let retries = 3;
+        let txSignature = '';
+        
+        while (retries > 0) {
+          try {
+            toast.loading(`Attempting to submit transaction (${4-retries}/3)...`, {
+              id: submissionToast
+            });
+            
+            // Get a fresh blockhash for each attempt
+            const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+            transaction.recentBlockhash = blockhash;
+            transaction.feePayer = publicKey;
+            
+            console.log("Transaction built with blockhash:", blockhash);
+            
+            // Sign the transaction with the user's wallet
+            const signedTransaction = await signTransaction(transaction);
+            console.log("Transaction signed by user");
+            
+            // Send the signed transaction
+            txSignature = await connection.sendRawTransaction(
+              signedTransaction.serialize(),
+              { skipPreflight: false, preflightCommitment: 'confirmed' }
+            );
+            console.log("Transaction submitted with signature:", txSignature);
+            
+            // Store transaction hash
+            setTransactionHash(txSignature);
+            
+            // Wait for confirmation
+            console.log("Waiting for transaction confirmation...");
+            const confirmationStatus = await connection.confirmTransaction({
+              blockhash,
+              lastValidBlockHeight,
+              signature: txSignature
+            }, 'confirmed');
+            
+            if (confirmationStatus.value.err) {
+              throw new Error(`Transaction confirmed with error: ${confirmationStatus.value.err}`);
+            }
+            
+            console.log("Transaction confirmed successfully");
+            
+            // Success notification
+            setSubmissionStatus('success');
+            toast.success('Verification submitted successfully! Your application is now under review.', {
+              id: submissionToast,
+              duration: 5000
+            });
+            
+            // Exit the retry loop on success
+            break;
+          } catch (error) {
+            console.error(`Transaction attempt ${4-retries}/3 failed:`, error);
+            
+            if (retries > 1 && (
+              error.message.includes('Blockhash not found') || 
+              error.message.includes('block height exceeded') ||
+              error.name === 'SendTransactionError'
+            )) {
+              console.log("Retrying transaction with fresh blockhash...");
+              retries--;
+              // Small delay before retry
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            } else {
+              // No more retries or different error - throw to outer catch
+              throw error;
+            }
+          }
+        }
       } catch (error) {
         console.error('Error during verification submission:', error);
         setSubmissionStatus('error');
-        toast.error(`Error: ${error.message || 'Failed to upload files or submit verification'}`, {
+        
+        // Provide more specific error messages based on the type of error
+        let errorMessage = error.message || 'Failed to upload files or submit verification';
+        
+        if (error.name === 'SendTransactionError') {
+          try {
+            // Try to extract logs if available
+            const logs = error.logs || [];
+            errorMessage = `Transaction failed: ${error.message}`;
+            console.error('Full error logs:', logs);
+            
+            // Add logs to error message if they exist
+            if (logs && logs.length > 0) {
+              errorMessage += `. Details: ${logs.join(', ')}`;
+            }
+          } catch (logError) {
+            errorMessage = `Transaction failed: ${error.message}`;
+          }
+        } else if (errorMessage.includes('User rejected')) {
+          errorMessage = 'Transaction was rejected in your wallet.';
+        } else if (errorMessage.includes('insufficient funds')) {
+          errorMessage = 'Your wallet has insufficient funds to complete this transaction.';
+        } else if (error.name === 'ProgramError') {
+          errorMessage = `Solana program error: ${error.msg || error.message}`;
+        } else if (errorMessage.includes('Blockhash not found')) {
+          errorMessage = 'Transaction timeout: blockhash expired. Please try again.';
+        }
+        
+        toast.error(`Error: ${errorMessage}`, {
           id: submissionToast,
           duration: 5000
         });
@@ -507,6 +675,38 @@ export default function Home() {
               <p className="mt-2 text-sm text-black">
                 Your application has been submitted successfully. Our team will review your documents and update you on the status.
               </p>
+              
+              {transactionHash && (
+                <div className="mt-4 border border-gray-200 rounded-md p-3 bg-gray-50">
+                  <p className="text-xs text-gray-600 mb-1">Transaction Hash:</p>
+                  <div className="flex items-center">
+                    <p className="text-xs font-mono text-gray-800 truncate max-w-[200px]">
+                      {transactionHash}
+                    </p>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(transactionHash);
+                        toast.success("Transaction hash copied to clipboard!");
+                      }}
+                      className="ml-2 text-xs text-blue-500 hover:text-blue-700 whitespace-nowrap"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <a 
+                    href={`https://explorer.solana.com/tx/${transactionHash}?cluster=devnet`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 text-xs text-blue-500 hover:text-blue-700 inline-flex items-center"
+                  >
+                    View on Solana Explorer
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                </div>
+              )}
+              
               <div className="mt-4">
                 <button
                   type="button"

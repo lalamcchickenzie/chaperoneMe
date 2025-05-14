@@ -12,8 +12,9 @@ import { useRouter } from 'next/navigation';
 import programIDL from '@/contract/idl.json';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CheckCircle, Info } from "lucide-react";
+import { PROGRAM_ACCOUNT_ADDRESS } from '@/lib/config';
 
-const PROGRAM_ID = new PublicKey('9cmzED2ENdQXuvH53Hgw7ENYhBXT69w2JhSsoz1b6ZSN');
+const PROGRAM_ID = new PublicKey(PROGRAM_ACCOUNT_ADDRESS);
 const AUTHORIZED_WALLET = 'GsjREUyUEkFRAhoSj1q9Tg4tPGCyoEAoTyFiZjqxKD92';
 
 const Initialize = () => {

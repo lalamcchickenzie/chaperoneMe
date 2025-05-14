@@ -3,7 +3,7 @@ use anchor_spl::token::{self, Token};
 use anchor_lang::solana_program::program::invoke;
 use anchor_lang::solana_program::system_instruction;
 
-declare_id!("9cmzED2ENdQXuvH53Hgw7ENYhBXT69w2JhSsoz1b6ZSN"); // Replace with your program ID
+declare_id!("E7N3tt6G96BLoD6vXVhztDaD1mGpDEm533jjxKErVaKk"); // Replace with your program ID
 
 #[program]
 pub mod chaperone_me {
@@ -201,7 +201,7 @@ pub struct GuideAccount {
     pub phone: String,                   // Phone number (max 20 chars)
     pub wallet_address: String,          // Wallet address (max 44 chars)
     pub license_uri: String,             // IPFS URI for the license (max 150 chars)
-    pub photo_id_uri: String,            // IPFS URI for the photo ID (max 150 chars)
+    pub photo_id_uri: String,           // IPFS URI for the photo ID (max 150 chars)
     pub attachment_uri: Option<String>,  // Optional attachment URI (max 150 chars)
     pub affiliation_type: AffiliationType, // Whether guide is agency or freelance
     pub agency_name: Option<String>,     // Agency name if affiliated (max 100 chars)
