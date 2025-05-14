@@ -3,9 +3,15 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import StampCard from './components/StampCard';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { WalletProvider } from './components/wallet-provider'; // call dekat sini
+import { useWallet } from '@solana/wallet-adapter-react';
 
-export default function Home() {
+// Wrap component to access useWallet hook
+function HomeContent() {
+  const { publicKey } = useWallet();
   const [showForm, setShowForm] = useState(false);
+  const [showWalletPrompt, setShowWalletPrompt] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [formData, setFormData] = useState({
     ic: '',
@@ -17,6 +23,7 @@ export default function Home() {
     type: '',
     agencyName: '',
     offerLetter: null,
+    walletAddress: '',
   });
 
   useEffect(() => {
@@ -26,6 +33,16 @@ export default function Home() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Update wallet address when publicKey changes
+  useEffect(() => {
+    if (publicKey) {
+      setFormData(prevData => ({
+        ...prevData,
+        walletAddress: publicKey.toString(),
+      }));
+    }
+  }, [publicKey]);
 
   const formatTime = (date) => {
     return date.toLocaleTimeString('en-US', {
@@ -61,6 +78,14 @@ export default function Home() {
     });
   };
 
+  const handleJoinClick = () => {
+    if (publicKey) {
+      setShowForm(true);
+    } else {
+      setShowWalletPrompt(true);
+    }
+  };
+
   return (
     <main className="min-h-screen">
       {/* Navigation */}
@@ -68,9 +93,12 @@ export default function Home() {
         <div className="flex items-center space-x-4">
           <a href="/" className="nav-link">HOME</a>
           <a href="#about-us" className="nav-link">ABOUT US</a>
-          <a href="#" className="nav-link" onClick={() => setShowForm(true)}>JOIN US TODAY</a>
+          <a href="#" className="nav-link" onClick={handleJoinClick}>JOIN US TODAY</a>
         </div>
-        <a href="#" className="nav-link">CONNECT</a>
+        <div className="wallet-adapter-dropdown">
+          <WalletMultiButton className="wallet-adapter-button" />
+        </div>
+        
       </nav>
 
       {/* Ticker Bar */}
@@ -138,6 +166,27 @@ export default function Home() {
           </p>
         </div>
       </div>
+
+      {/* Wallet Connection Prompt */}
+      {showWalletPrompt && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-800">Connect Wallet</h2>
+              <button 
+                onClick={() => setShowWalletPrompt(false)}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-gray-700 mb-6">Please connect your wallet to proceed with the verification process.</p>
+            <div className="flex justify-center">
+              <WalletMultiButton className="wallet-adapter-button" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Popup Form */}
       {showForm && (
@@ -246,6 +295,17 @@ export default function Home() {
                   />
                 </>
               )}
+              <div className="mt-2">
+                <label className="block text-white mb-1">Wallet Address</label>
+                <input
+                  type="text"
+                  name="walletAddress"
+                  className="form-input bg-gray-100"
+                  value={formData.walletAddress}
+                  readOnly
+                />
+                <p className="text-xs text-gray-300 mt-1">Address automatically captured from your connected wallet</p>
+              </div>
               <button type="submit" className="form-submit w-full mt-4">
                 Submit Verification Request
               </button>
@@ -287,5 +347,14 @@ export default function Home() {
         </a>
       </div>
     </main>
+  );
+}
+
+// Main component that provides wallet context
+export default function Home() {
+  return (
+    <WalletProvider>
+      <HomeContent />
+    </WalletProvider>
   );
 } 
