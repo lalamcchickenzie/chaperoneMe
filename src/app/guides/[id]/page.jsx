@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import StampCard from '@/app/components/StampCard';
 import * as anchor from '@coral-xyz/anchor';
 import programIDL from '@/contract/idl.json';
-import { PROGRAM_ACCOUNT_ADDRESS } from '@/lib/config';
+import { PROGRAM_ACCOUNT_ADDRESS, WEBSITE_URL } from '@/lib/config';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function GuideProfilePage({ params }) {
@@ -198,7 +198,7 @@ export default function GuideProfilePage({ params }) {
               <StampCard 
                 guideName={guideData.name}
                 guideImage={guideData.photoIdUri}
-                qrValue={`https://chaperoneme.com/guides/${id}`}
+                qrValue={`${WEBSITE_URL}/guides/${id}`}
               />
               
               <div className="mt-8 text-center">

@@ -40,6 +40,14 @@ const Navbar = () => {
             <Link href="/#about-us" className="hover:text-blue-300 transition-colors">
               About
             </Link>
+            {publicKey && (
+              <Link href="/portfolio" className="hover:text-blue-300 transition-colors">
+                Portfolio
+              </Link>
+            )}
+            <Link href="/guides" className="hover:text-blue-300 transition-colors">
+              Guides
+            </Link>
             <button 
               onClick={handleJoinClick}
               className="hover:text-blue-300 transition-colors bg-transparent border-none p-0 text-white"
@@ -106,6 +114,15 @@ const Navbar = () => {
           >
             About
           </Link>
+          {publicKey && (
+            <Link
+              href="/portfolio"
+              className="block px-3 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              Portfolio
+            </Link>
+          )}
           <Link
             href="/guides"
             className="block px-3 py-2 rounded-md hover:bg-blue-700 transition-colors"
