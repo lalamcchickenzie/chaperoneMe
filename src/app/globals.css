@@ -88,17 +88,21 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: -2rem;
-    margin: 2rem 0;
+    gap: 1rem;
+    margin-top: 2rem;
   }
 
   .stamp {
-    filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.6));
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
-  .stamp-left, .stamp-right {
-    transform: scale(0.8);
-    opacity: 0.8;
+  .stamp-left {
+    transform: rotate(-15deg);
+  }
+
+  .stamp-right {
+    transform: rotate(15deg);
   }
 
   .verification-card {
@@ -108,41 +112,36 @@
   }
 
   .verification-form {
-    background-color: var(--navy-blue);
+    background-color: #2E3A50;
     padding: 2rem;
-    border: 1px solid #FFFFFF;
+    border-radius: 0.5rem;
+    width: 100%;
     max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    margin: 2rem auto;
-    position: relative;
-    border-radius: 1rem;
   }
 
   .form-input {
-    background-color: var(--parchment);
-    color: var(--charcoal);
-    border: 1px solid var(--charcoal);
+    display: block;
+    width: 100%;
     padding: 0.5rem;
     margin-bottom: 1rem;
-    width: 100%;
-    font-family: 'Courier New', monospace;
+    border-radius: 0.25rem;
+    border: 1px solid #ccc;
   }
 
   .form-submit {
-    background-color: var(--charcoal);
-    color: var(--parchment);
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #10B981;
+    color: white;
     border: none;
-    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
     cursor: pointer;
-    font-family: 'Courier New', monospace;
-    text-transform: uppercase;
-    transition: background-color 0.2s;
   }
 
   .form-submit:hover {
-    background-color: #2a2a2a;
+    background-color: #059669;
   }
 
   /* Add smooth scrolling to the page */
@@ -244,12 +243,12 @@
       transform: translateX(0);
     }
     100% {
-      transform: translateX(-50%);
+      transform: translateX(-100%);
     }
   }
 
   .animate-ticker {
-    animation: ticker 18s linear infinite;
+    animation: ticker 20s linear infinite;
   }
 
   .font-baskerville {
@@ -258,7 +257,7 @@
 }
 
 :root {
-  --brand-color: #2563eb;
+  --brand-color: #2E3A50;
   --brand-light: #eff6ff;
   --brand-dark: #1e40af;
   --navy-blue: #2E3A50;
@@ -356,8 +355,6 @@
   display: flex;
   align-items: center;
 }
-
-
 
 @layer base {
   * {

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import StampCard from '../components/StampCard';
-import Navbar from '../components/Navbar';
+import StampCard from './components/StampCard';
+import Navbar from './components/Navbar';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
 import toast, { Toaster } from 'react-hot-toast';
@@ -11,6 +11,7 @@ import * as anchor from '@coral-xyz/anchor';
 import { BN } from '@coral-xyz/anchor';
 import programIDL from '@/contract/idl.json';
 import { PROGRAM_ACCOUNT_ADDRESS } from '@/lib/config';
+import Link from 'next/link';
 // Main component that directly uses wallet context now
 export default function Home() {
   const { publicKey, signTransaction } = useWallet();
@@ -781,9 +782,22 @@ export default function Home() {
             guideName="Michael B. Jordan"
             guideImage="/download.jpeg"
           />
-          <p className="text-center text-gray-600 mt-4">
+          <p className="text-center text-gray-600 mt-4 mb-6">
             Click the card to authenticate
           </p>
+          
+          <div className="flex justify-center">
+            <Link 
+              href="/guides" 
+              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" />
+                <path d="M3 8a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+              </svg>
+              View Guide Directory
+            </Link>
+          </div>
         </div>
       </div>
 

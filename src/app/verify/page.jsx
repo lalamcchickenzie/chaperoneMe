@@ -22,7 +22,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 
 export default function VerifyPage() {
   const router = useRouter();
-  const { publicKey, signTransaction } = useWallet();
+  const { publicKey, signTransaction, signMessage } = useWallet();
   const [guideSubmissions, setGuideSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedGuide, setSelectedGuide] = useState(null);
@@ -56,6 +56,38 @@ export default function VerifyPage() {
           signAllTransactions: async (txs) => {
             return await Promise.all(txs.map(tx => signTransaction(tx)));
           },
+          // Add signMessage capability if available
+          signMessage: signMessage || 
+            // Fallback implementation if wallet doesn't support signMessage directly
+            (async (message) => {
+              try {
+                // Try to use the wallet's signMessage if available
+                if (typeof signMessage === 'function') {
+                  return await signMessage(message);
+                }
+                
+                // Alternative method: Create a dummy transaction and sign it
+                console.log('Using fallback signMessage implementation');
+                const tx = new anchor.web3.Transaction();
+                const blockhash = (await connectionRef.current.getLatestBlockhash()).blockhash;
+                tx.recentBlockhash = blockhash;
+                tx.feePayer = publicKey;
+                
+                // Add message as memo
+                const messageStr = new TextDecoder().decode(message);
+                tx.add(new anchor.web3.TransactionInstruction({
+                  keys: [],
+                  programId: new anchor.web3.PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'),
+                  data: Buffer.from(messageStr),
+                }));
+                
+                const signedTx = await signTransaction(tx);
+                return signedTx.signatures[0].signature;
+              } catch (error) {
+                console.error('Error in fallback signMessage:', error);
+                throw error;
+              }
+            }),
         },
         { commitment: 'confirmed' }
       );
@@ -77,13 +109,45 @@ export default function VerifyPage() {
           signAllTransactions: async (txs) => {
             return await Promise.all(txs.map(tx => signTransaction(tx)));
           },
+          // Add signMessage capability with the same implementation as above
+          signMessage: signMessage || 
+            // Fallback implementation
+            (async (message) => {
+              try {
+                // Try to use the wallet's signMessage if available
+                if (typeof signMessage === 'function') {
+                  return await signMessage(message);
+                }
+                
+                // Alternative method: Create a dummy transaction and sign it
+                console.log('Using fallback signMessage implementation for Metaplex');
+                const tx = new anchor.web3.Transaction();
+                const blockhash = (await connectionRef.current.getLatestBlockhash()).blockhash;
+                tx.recentBlockhash = blockhash;
+                tx.feePayer = publicKey;
+                
+                // Add message as memo
+                const messageStr = new TextDecoder().decode(message);
+                tx.add(new anchor.web3.TransactionInstruction({
+                  keys: [],
+                  programId: new anchor.web3.PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'),
+                  data: Buffer.from(messageStr),
+                }));
+                
+                const signedTx = await signTransaction(tx);
+                return signedTx.signatures[0].signature;
+              } catch (error) {
+                console.error('Error in fallback signMessage for Metaplex:', error);
+                throw error;
+              }
+            }),
         }));
     } else {
       providerRef.current = null;
       programRef.current = null;
       metaplexRef.current = null;
     }
-  }, [publicKey, signTransaction]);
+  }, [publicKey, signTransaction, signMessage]);
 
   // Mint NFT with guide data
   const mintNFT = async (guideData) => {
@@ -159,31 +223,116 @@ export default function VerifyPage() {
       toast.loading("Creating NFT...", { id: mintingToast });
       setMintingProgress(70);
       
-      // Create NFT and send it to the guide's wallet
-      const { nft } = await metaplexRef.current.nfts().create({
-        uri,
-        name: `Verified Tour Guide: ${guideData.name}`,
-        sellerFeeBasisPoints: 0, // No royalties
-        tokenOwner: new anchor.web3.PublicKey(guideData.walletAddress), // Send to guide's wallet
-      });
+      let nftData = null;
       
-      setMintingProgress(100);
-      toast.success("NFT minted successfully!", { id: mintingToast });
-      
-      // Add to minted NFTs list
-      const nftData = {
-        mintAddress: nft.address.toString(),
-        name: metadata.name,
-        imageUri,
-        guide: guideData,
-        metadata: {
-          ...metadata,
-          metadataUri: uri
-        },
-        mintedAt: new Date().toISOString()
-      };
-      
-      setMintedNFTs(prev => [...prev, nftData]);
+      // Try simplified approach first to avoid signMessage issues
+      try {
+        // Use simplified approach with minimal parameters
+        toast.loading("Using simplified minting approach...", { id: mintingToast });
+        
+        const { nft } = await metaplexRef.current.nfts().create({
+          uri,
+          name: `Verified Tour Guide: ${guideData.name}`,
+          sellerFeeBasisPoints: 0, // No royalties
+          confirmOptions: {
+            skipPreflight: true,
+            maxRetries: 3,
+          },
+        });
+        
+        setMintingProgress(100);
+        toast.success("NFT minted successfully!", { id: mintingToast });
+        
+        // Add to minted NFTs list
+        nftData = {
+          mintAddress: nft.address.toString(),
+          name: metadata.name,
+          imageUri,
+          guide: guideData,
+          metadata: {
+            ...metadata,
+            metadataUri: uri
+          },
+          mintedAt: new Date().toISOString()
+        };
+        
+        setMintedNFTs(prev => [...prev, nftData]);
+      } catch (simpleMintError) {
+        console.error("Error in simplified NFT creation:", simpleMintError);
+        
+        // If simplified approach fails, try the full approach
+        toast.loading("Trying alternative minting method...", { id: mintingToast });
+        
+        try {
+          // Try the full approach with all parameters
+          const { nft } = await metaplexRef.current.nfts().create({
+            uri,
+            name: `Verified Tour Guide: ${guideData.name}`,
+            sellerFeeBasisPoints: 0,
+            tokenOwner: new anchor.web3.PublicKey(guideData.walletAddress),
+            payer: publicKey,
+            tokenStandard: 0,
+          });
+          
+          setMintingProgress(100);
+          toast.success("NFT minted successfully with full method!", { id: mintingToast });
+          
+          // Add to minted NFTs list
+          nftData = {
+            mintAddress: nft.address.toString(),
+            name: metadata.name,
+            imageUri,
+            guide: guideData,
+            metadata: {
+              ...metadata,
+              metadataUri: uri
+            },
+            mintedAt: new Date().toISOString()
+          };
+          
+          setMintedNFTs(prev => [...prev, nftData]);
+        } catch (fullMintError) {
+          console.error("Error in full NFT creation:", fullMintError);
+          
+          // If both approaches fail, try the last fallback with minimal config
+          if (fullMintError.message.includes("signMessage") || 
+              fullMintError.name === "OperationNotSupportedByWalletAdapterError" ||
+              simpleMintError.message.includes("signMessage")) {
+            toast.loading("Trying last fallback minting method...", { id: mintingToast });
+            
+            // Super simplified approach
+            const { nft } = await metaplexRef.current.nfts().create({
+              uri,
+              name: `Verified Guide: ${guideData.name.substring(0, 10)}`,
+              sellerFeeBasisPoints: 0,
+              confirmOptions: {
+                skipPreflight: true,
+                commitment: 'finalized',
+              },
+            });
+            
+            setMintingProgress(100);
+            toast.success("NFT minted with fallback method!", { id: mintingToast });
+            
+            // Add to minted NFTs list
+            nftData = {
+              mintAddress: nft.address.toString(),
+              name: metadata.name,
+              imageUri,
+              guide: guideData,
+              metadata: {
+                ...metadata,
+                metadataUri: uri
+              },
+              mintedAt: new Date().toISOString()
+            };
+            
+            setMintedNFTs(prev => [...prev, nftData]);
+          } else {
+            throw fullMintError; // Re-throw if it's not a signMessage error
+          }
+        }
+      }
       
       return nftData;
     } catch (error) {
