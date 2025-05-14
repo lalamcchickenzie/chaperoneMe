@@ -22,7 +22,9 @@ pub mod chaperone_me {
         name: String,
         email: String,
         phone: String,
+        wallet_address: String,
         license_uri: String,
+        photo_id_uri: String,
         attachment_uri: Option<String>,
         affiliation_type: AffiliationType,
         agency_name: Option<String>,
@@ -44,7 +46,9 @@ pub mod chaperone_me {
         guide_account.name = name;
         guide_account.email = email;
         guide_account.phone = phone;
+        guide_account.wallet_address = wallet_address;
         guide_account.license_uri = license_uri;
+        guide_account.photo_id_uri = photo_id_uri;
         guide_account.attachment_uri = attachment_uri;
         guide_account.affiliation_type = affiliation_type;
         guide_account.agency_name = agency_name;
@@ -195,7 +199,9 @@ pub struct GuideAccount {
     pub name: String,                    // Full name (max 100 chars)
     pub email: String,                   // Email (max 100 chars)
     pub phone: String,                   // Phone number (max 20 chars)
+    pub wallet_address: String,          // Wallet address (max 44 chars)
     pub license_uri: String,             // IPFS URI for the license (max 150 chars)
+    pub photo_id_uri: String,            // IPFS URI for the photo ID (max 150 chars)
     pub attachment_uri: Option<String>,  // Optional attachment URI (max 150 chars)
     pub affiliation_type: AffiliationType, // Whether guide is agency or freelance
     pub agency_name: Option<String>,     // Agency name if affiliated (max 100 chars)
@@ -212,7 +218,9 @@ impl GuideAccount {
                             (4 + 100) + // name
                             (4 + 100) + // email
                             (4 + 20) + // phone
+                            (4 + 44) + // wallet_address
                             (4 + 150) + // license_uri
+                            (4 + 150) + // photo_id_uri
                             (1 + 4 + 150) + // attachment_uri (option)
                             1 + // affiliation_type
                             (1 + 4 + 100) + // agency_name (option)

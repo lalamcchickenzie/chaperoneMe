@@ -6,6 +6,7 @@ import StampCard from './components/StampCard';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { WalletProvider } from './components/wallet-provider'; // call dekat sini
 import { useWallet } from '@solana/wallet-adapter-react';
+import toast, { Toaster } from 'react-hot-toast';
 
 // Wrap component to access useWallet hook
 function HomeContent() {
@@ -13,12 +14,20 @@ function HomeContent() {
   const [showForm, setShowForm] = useState(false);
   const [showWalletPrompt, setShowWalletPrompt] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [uploadProgress, setUploadProgress] = useState({
+    license: 0,
+    photoId: 0,
+    attachment: 0,
+    offerLetter: 0,
+  });
+  const [submissionStatus, setSubmissionStatus] = useState('idle'); // idle, uploading, submitting, success, error
   const [formData, setFormData] = useState({
     ic: '',
     name: '',
     email: '',
     phone: '',
     motac: null,
+    photoId: null,
     attachment: null,
     type: '',
     agencyName: '',
@@ -56,11 +65,279 @@ function HomeContent() {
     return date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
   };
 
+  const uploadFileToIPFS = async (file) => {
+    try {
+      // Convert file to form data
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // Upload file to IPFS via Pinata
+      const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+        },
+        body: formData,
+      });
+      
+      const data = await response.json();
+      console.log('File upload response:', data);
+      
+      return `https://plum-tough-mongoose-147.mypinata.cloud/ipfs/${data.IpfsHash}`;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  };
+
+  const createMetadataAndUploadToIPFS = async (fileUrl, name, description) => {
+    const metadata = {
+      name: name,
+      description: description || `Document for ${name}`,
+      image: fileUrl,
+      attributes: [
+        {
+          trait_type: "Created By",
+          value: publicKey?.toString().slice(0, 8) + "..." || "Unknown"
+        }
+      ]
+    };
+
+    try {
+      // Upload metadata to IPFS via Pinata
+      const response = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+        },
+        body: JSON.stringify(metadata),
+      });
+      
+      const data = await response.json();
+      console.log('Metadata upload response:', data);
+      
+      return `https://plum-tough-mongoose-147.mypinata.cloud/ipfs/${data.IpfsHash}`;
+    } catch (error) {
+      console.error('Error uploading metadata:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log('Form submitted:', formData);
-    setShowForm(false); // Close the popup after submission
+    setShowForm(false); // Hide form immediately for better UX
+    
+    // Create notification for the entire submission process
+    const submissionToast = toast.loading(
+      'Starting submission process...',
+      { duration: Infinity }
+    );
+    
+    // Upload files and submit to Solana program
+    const processVerification = async () => {
+      try {
+        setSubmissionStatus('uploading');
+        toast.loading('Preparing files for upload...', {
+          id: submissionToast
+        });
+        
+        // Upload license (MOTAC) to IPFS
+        let licenseUri = '';
+        if (formData.motac) {
+          toast.loading('Uploading license (1/4)...', {
+            id: submissionToast
+          });
+          
+          const formDataFile = new FormData();
+          formDataFile.append('file', formData.motac);
+          
+          setUploadProgress(prev => ({ ...prev, license: 10 }));
+          
+          const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+            },
+            body: formDataFile,
+          });
+          
+          setUploadProgress(prev => ({ ...prev, license: 100 }));
+          const data = await response.json();
+          licenseUri = `https://plum-tough-mongoose-147.mypinata.cloud/ipfs/${data.IpfsHash}`;
+          
+          toast.loading('License uploaded successfully!', {
+            id: submissionToast
+          });
+        }
+        
+        // Upload photo ID to IPFS
+        let photoIdUri = '';
+        if (formData.photoId) {
+          toast.loading('Uploading photo ID (2/4)...', {
+            id: submissionToast
+          });
+          
+          const formDataFile = new FormData();
+          formDataFile.append('file', formData.photoId);
+          
+          setUploadProgress(prev => ({ ...prev, photoId: 10 }));
+          
+          const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+            },
+            body: formDataFile,
+          });
+          
+          setUploadProgress(prev => ({ ...prev, photoId: 100 }));
+          const data = await response.json();
+          photoIdUri = `https://plum-tough-mongoose-147.mypinata.cloud/ipfs/${data.IpfsHash}`;
+          
+          toast.loading('Photo ID uploaded successfully!', {
+            id: submissionToast
+          });
+        }
+        
+        // Upload attachment to IPFS (optional)
+        let attachmentUri = null;
+        if (formData.attachment) {
+          toast.loading('Uploading attachment (3/4)...', {
+            id: submissionToast
+          });
+          
+          const formDataFile = new FormData();
+          formDataFile.append('file', formData.attachment);
+          
+          setUploadProgress(prev => ({ ...prev, attachment: 10 }));
+          
+          const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+            },
+            body: formDataFile,
+          });
+          
+          setUploadProgress(prev => ({ ...prev, attachment: 100 }));
+          const data = await response.json();
+          attachmentUri = `https://plum-tough-mongoose-147.mypinata.cloud/ipfs/${data.IpfsHash}`;
+          
+          toast.loading('Attachment uploaded successfully!', {
+            id: submissionToast
+          });
+        }
+        
+        // Upload offer letter to IPFS (if agency type)
+        let offerLetterUri = null;
+        if (formData.type === 'agency' && formData.offerLetter) {
+          toast.loading('Uploading offer letter (4/4)...', {
+            id: submissionToast
+          });
+          
+          const formDataFile = new FormData();
+          formDataFile.append('file', formData.offerLetter);
+          
+          setUploadProgress(prev => ({ ...prev, offerLetter: 10 }));
+          
+          const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+            },
+            body: formDataFile,
+          });
+          
+          setUploadProgress(prev => ({ ...prev, offerLetter: 100 }));
+          const data = await response.json();
+          offerLetterUri = `https://plum-tough-mongoose-147.mypinata.cloud/ipfs/${data.IpfsHash}`;
+          
+          toast.loading('Offer letter uploaded successfully!', {
+            id: submissionToast
+          });
+        }
+        
+        // All files uploaded, prepare for blockchain submission
+        toast.loading('All files uploaded. Preparing transaction...', {
+          id: submissionToast
+        });
+        
+        // Prepare data for Solana program according to contract parameters
+        const submissionData = {
+          ic_number: formData.ic,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          wallet_address: formData.walletAddress,
+          license_uri: licenseUri,
+          photo_id_uri: photoIdUri,
+          attachment_uri: attachmentUri,
+          affiliation_type: formData.type === 'agency' ? 'Agency' : 'Freelance',
+          agency_name: formData.type === 'agency' ? formData.agencyName : null,
+          offer_letter_uri: offerLetterUri,
+        };
+        
+        setSubmissionStatus('submitting');
+        toast.loading('Submitting verification to blockchain...', {
+          id: submissionToast
+        });
+        
+        // Simulate blockchain transaction time
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // This is where you would call your Solana program with the IPFS URIs
+        // Example: 
+        // await program.methods.submitVerification(
+        //   submissionData.ic_number,
+        //   submissionData.name,
+        //   submissionData.email,
+        //   submissionData.phone,
+        //   submissionData.wallet_address,
+        //   submissionData.license_uri,
+        //   submissionData.photo_id_uri,
+        //   submissionData.attachment_uri,
+        //   submissionData.affiliation_type === 'Agency' ? { agency: {} } : { freelance: {} },
+        //   submissionData.agency_name,
+        //   submissionData.offer_letter_uri
+        // ).accounts({
+        //   guideAccount: guideAccount,
+        //   adminAccount: adminAccount,
+        //   authority: publicKey,
+        //   systemProgram: web3.SystemProgram.programId,
+        // }).rpc();
+        
+        // Success notification
+        console.log('Verification submitted successfully!');
+        setSubmissionStatus('success');
+        toast.success('Verification submitted successfully! Your application is now under review.', {
+          id: submissionToast,
+          duration: 5000
+        });
+        
+      } catch (error) {
+        console.error('Error during verification submission:', error);
+        setSubmissionStatus('error');
+        toast.error(`Error: ${error.message || 'Failed to upload files or submit verification'}`, {
+          id: submissionToast,
+          duration: 5000
+        });
+      } finally {
+        // Reset progress
+        setTimeout(() => {
+          setUploadProgress({
+            license: 0,
+            photoId: 0,
+            attachment: 0,
+            offerLetter: 0,
+          });
+          setSubmissionStatus('idle');
+        }, 5000);
+      }
+    };
+    
+    // Start the process
+    processVerification();
   };
 
   const handleChange = (e) => {
@@ -88,6 +365,149 @@ function HomeContent() {
 
   return (
     <main className="min-h-screen">
+      {/* Toast Container for Notifications */}
+      <Toaster 
+        position="top-center" 
+        toastOptions={{ 
+          className: 'react-hot-toast',
+          style: {
+            color: '#000000',
+            fontWeight: 'medium',
+          },
+          success: {
+            style: {
+              background: '#ECFDF5',
+              border: '1px solid #10B981',
+              color: '#000000',
+            },
+          },
+          error: {
+            style: {
+              background: '#FEF2F2',
+              border: '1px solid #EF4444',
+              color: '#000000',
+            },
+          },
+          loading: {
+            style: {
+              background: '#EFF6FF',
+              border: '1px solid #3B82F6',
+              color: '#000000',
+            },
+          },
+        }} 
+      />
+      
+      {/* Show Progress Modal if uploading or submitting */}
+      {(submissionStatus === 'uploading' || submissionStatus === 'submitting') && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+            <h2 className="text-xl font-bold text-center mb-6 text-black">
+              {submissionStatus === 'uploading' ? 'Uploading Files' : 'Submitting to Blockchain'}
+            </h2>
+            
+            {formData.motac && (
+              <div className="mb-3">
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium text-black">MOTAC License</span>
+                  <span className="text-sm font-medium text-black">{uploadProgress.license}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-500" 
+                    style={{ width: `${uploadProgress.license}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+            
+            {formData.photoId && (
+              <div className="mb-3">
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium text-black">Photo ID</span>
+                  <span className="text-sm font-medium text-black">{uploadProgress.photoId}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-500" 
+                    style={{ width: `${uploadProgress.photoId}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+            
+            {formData.attachment && (
+              <div className="mb-3">
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium text-black">Attachment</span>
+                  <span className="text-sm font-medium text-black">{uploadProgress.attachment}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-500" 
+                    style={{ width: `${uploadProgress.attachment}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+            
+            {formData.type === 'agency' && formData.offerLetter && (
+              <div className="mb-3">
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm font-medium text-black">Offer Letter</span>
+                  <span className="text-sm font-medium text-black">{uploadProgress.offerLetter}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-500" 
+                    style={{ width: `${uploadProgress.offerLetter}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+            
+            {submissionStatus === 'submitting' && (
+              <div className="mt-6 text-center">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
+                  <span className="sr-only">Loading...</span>
+                </div>
+                <p className="mt-2 text-sm text-black">
+                  Submitting your application to the blockchain. This may take a moment...
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Show Success Modal if verification successful */}
+      {submissionStatus === 'success' && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+                <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="mt-3 text-lg font-medium text-black">Verification Submitted!</h3>
+              <p className="mt-2 text-sm text-black">
+                Your application has been submitted successfully. Our team will review your documents and update you on the status.
+              </p>
+              <div className="mt-4">
+                <button
+                  type="button"
+                  className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none"
+                  onClick={() => setSubmissionStatus('idle')}
+                >
+                  Back to Home
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Navigation */}
       <nav className="flex justify-between items-center p-4 bg-[#1A2A3A]">
         <div className="flex items-center space-x-4">
@@ -241,6 +661,15 @@ function HomeContent() {
                 type="file"
                 name="motac"
                 accept="application/pdf"
+                className="form-input"
+                onChange={handleFileChange}
+                required
+              />
+              <label className="block text-white mb-1 mt-2">Upload photo ID</label>
+              <input
+                type="file"
+                name="photoId"
+                accept="image/*"
                 className="form-input"
                 onChange={handleFileChange}
                 required
