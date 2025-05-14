@@ -278,3 +278,28 @@
   white-space: nowrap;
   overflow: hidden;
 }
+
+/* Wallet Adapter Button Styling */
+.wallet-adapter-button {
+  background-color: var(--brand-color) !important;
+  color: white !important;
+  border-radius: 0.5rem !important;
+  padding: 0.5rem 1rem !important;
+  font-family: 'Courier New', monospace !important;
+  font-size: 0.875rem !important;
+  transition: background-color 0.3s ease !important;
+  border: none !important;
+}
+
+.wallet-adapter-button:hover {
+  background-color: var(--brand-dark) !important;
+}
+
+.wallet-adapter-button:not([disabled]):hover {
+  background-color: var(--brand-dark) !important;
+}
+
+.wallet-adapter-dropdown {
+  display: flex;
+  align-items: center;
+}
