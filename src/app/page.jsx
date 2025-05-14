@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import StampCard from './components/StampCard';
+import Navbar from './components/Navbar';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { WalletProvider } from './components/wallet-provider'; // call dekat sini
 import { useWallet } from '@solana/wallet-adapter-react';
 import toast, { Toaster } from 'react-hot-toast';
 
-// Wrap component to access useWallet hook
-function HomeContent() {
+// Main component that directly uses wallet context now
+export default function Home() {
   const { publicKey } = useWallet();
   const [showForm, setShowForm] = useState(false);
   const [showWalletPrompt, setShowWalletPrompt] = useState(false);
@@ -52,6 +52,19 @@ function HomeContent() {
       }));
     }
   }, [publicKey]);
+
+  // Add event listener for openJoinForm event
+  useEffect(() => {
+    const handleOpenJoinForm = () => {
+      setShowForm(true);
+    };
+    
+    window.addEventListener('openJoinForm', handleOpenJoinForm);
+    
+    return () => {
+      window.removeEventListener('openJoinForm', handleOpenJoinForm);
+    };
+  }, []);
 
   const formatTime = (date) => {
     return date.toLocaleTimeString('en-US', {
@@ -508,19 +521,6 @@ function HomeContent() {
         </div>
       )}
 
-      {/* Navigation */}
-      <nav className="flex justify-between items-center p-4 bg-[#1A2A3A]">
-        <div className="flex items-center space-x-4">
-          <a href="/" className="nav-link">HOME</a>
-          <a href="#about-us" className="nav-link">ABOUT US</a>
-          <a href="#" className="nav-link" onClick={handleJoinClick}>JOIN US TODAY</a>
-        </div>
-        <div className="wallet-adapter-dropdown">
-          <WalletMultiButton className="wallet-adapter-button" />
-        </div>
-        
-      </nav>
-
       {/* Ticker Bar */}
       <div className="ticker-bar-wrapper overflow-hidden whitespace-nowrap bg-[#E6E0D5]">
         <div className="ticker-bar-inner inline-block animate-ticker">
@@ -776,14 +776,5 @@ function HomeContent() {
         </a>
       </div>
     </main>
-  );
-}
-
-// Main component that provides wallet context
-export default function Home() {
-  return (
-    <WalletProvider>
-      <HomeContent />
-    </WalletProvider>
   );
 } 
