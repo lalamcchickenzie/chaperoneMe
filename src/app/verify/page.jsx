@@ -338,7 +338,16 @@ export default function VerifyPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button variant="outline" size="sm" onClick={() => openGuideDetails(guide)}>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => openGuideDetails(guide)}
+                              className="transition-all duration-200 hover:bg-gray-100 hover:shadow-md rounded-md px-4 py-2 text-gray-700 flex items-center gap-1"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                <circle cx="12" cy="12" r="3" />
+                              </svg>
                               View Details
                             </Button>
                             {guide.status === 'pending' && (
@@ -348,8 +357,11 @@ export default function VerifyPage() {
                                   size="default" 
                                   onClick={() => handleApproveGuide(guide)}
                                   disabled={actionInProgress}
-                                  className="bg-green-600 hover:bg-green-700 text-white font-bold"
+                                  className="transition-all duration-200 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-md shadow hover:shadow-lg flex items-center gap-1 disabled:opacity-50"
                                 >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                                    <path d="M20 6 9 17l-5-5" />
+                                  </svg>
                                   Approve
                                 </Button>
                                 <Button 
@@ -357,8 +369,12 @@ export default function VerifyPage() {
                                   size="default" 
                                   onClick={() => handleRejectGuide(guide)}
                                   disabled={actionInProgress}
-                                  className="bg-red-600 hover:bg-red-700 text-white font-bold"
+                                  className="transition-all duration-200 bg-rose-600 hover:bg-rose-700 text-white font-medium py-2 px-4 rounded-md shadow hover:shadow-lg flex items-center gap-1 disabled:opacity-50"
                                 >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                                    <path d="M18 6 6 18" />
+                                    <path d="m6 6 12 12" />
+                                  </svg>
                                   Reject
                                 </Button>
                               </>
@@ -441,14 +457,38 @@ export default function VerifyPage() {
                   </div>
                   <div>
                     <span className="block text-sm font-medium text-gray-700">Photo ID</span>
-                    <a 
-                      href={selectedGuide.photoIdUri} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="block mt-1 text-sm text-blue-600 hover:text-blue-800"
-                    >
-                      View Photo ID
-                    </a>
+                    <div className="mt-2">
+                      {selectedGuide.photoIdUri && (
+                        <div className="relative group">
+                          <img 
+                            src={selectedGuide.photoIdUri} 
+                            alt="Photo ID" 
+                            className="w-full max-w-xs rounded-md border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+                            onClick={() => window.open(selectedGuide.photoIdUri, '_blank')}
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 flex items-center justify-center transition-all duration-200 rounded-md">
+                            <div className="opacity-0 group-hover:opacity-100 bg-white p-2 rounded-full shadow-lg">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="m15 3 6 6m0 0-6 6m6-6H9"></path>
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <a 
+                        href={selectedGuide.photoIdUri} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="block mt-2 text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                          <path d="M15 3h6v6"></path>
+                          <path d="M10 14 21 3"></path>
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        </svg>
+                        View Full Photo ID
+                      </a>
+                    </div>
                   </div>
                   {selectedGuide.attachmentUri && (
                     <div>
@@ -495,30 +535,65 @@ export default function VerifyPage() {
           
           {/* Floating action buttons - only show for pending guides */}
           {selectedGuide && selectedGuide.status === 'pending' && (
-            <div className="fixed bottom-20 right-8 z-50 flex gap-2">
+            <div className="fixed bottom-20 right-8 z-50 flex gap-3">
               <Button 
                 variant="destructive"
                 size="lg"
                 onClick={() => handleRejectGuide(selectedGuide)}
                 disabled={actionInProgress}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full shadow-lg"
+                className="transition-all duration-300 bg-rose-600 hover:bg-rose-700 text-white font-medium py-3 px-6 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center gap-2 disabled:opacity-50"
               >
-                {actionInProgress ? 'Processing...' : 'Reject Guide'}
+                {actionInProgress ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 6 6 18" />
+                      <path d="m6 6 12 12" />
+                    </svg>
+                    Reject Guide
+                  </>
+                )}
               </Button>
               <Button 
                 variant="success"
                 size="lg"
                 onClick={() => handleApproveGuide(selectedGuide)}
                 disabled={actionInProgress}
-                className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full shadow-lg"
+                className="transition-all duration-300 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-6 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center gap-2 disabled:opacity-50"
               >
-                {actionInProgress ? 'Processing...' : 'Approve Guide'}
+                {actionInProgress ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                    Approve Guide
+                  </>
+                )}
               </Button>
             </div>
           )}
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => setDialogOpen(false)}
+              className="transition-all duration-200 border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium py-2 px-5 rounded-md hover:shadow-md"
+            >
               Close
             </Button>
           </DialogFooter>
