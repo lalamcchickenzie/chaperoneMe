@@ -11,7 +11,14 @@ import * as anchor from '@coral-xyz/anchor';
 import { BN } from '@coral-xyz/anchor';
 import programIDL from '@/contract/idl.json';
 import { PROGRAM_ACCOUNT_ADDRESS } from '@/lib/config';
-import Link from 'next/link';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
 // Main component that directly uses wallet context now
 export default function Home() {
   const { publicKey, signTransaction } = useWallet();
@@ -782,177 +789,282 @@ export default function Home() {
             guideName="Michael B. Jordan"
             guideImage="/download.jpeg"
           />
-          <p className="text-center text-gray-600 mt-4 mb-6">
+          <p className="text-center text-gray-600 mt-4">
             Click the card to authenticate
           </p>
-          
-          <div className="flex justify-center">
-            <Link 
-              href="/guides" 
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" />
-                <path d="M3 8a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
-              </svg>
-              View Guide Directory
-            </Link>
-          </div>
         </div>
       </div>
 
       {/* Wallet Connection Prompt */}
-      {showWalletPrompt && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-800">Connect Wallet</h2>
-              <button 
-                onClick={() => setShowWalletPrompt(false)}
-                className="text-gray-600 hover:text-gray-800"
-              >
-                ✕
-              </button>
-            </div>
-            <p className="text-gray-700 mb-6">Please connect your wallet to proceed with the verification process.</p>
-            <div className="flex justify-center">
-              <WalletMultiButton className="wallet-adapter-button" />
-            </div>
+      <Dialog open={showWalletPrompt} onOpenChange={setShowWalletPrompt}>
+        <DialogContent className="bg-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-800">Connect Wallet</DialogTitle>
+            <DialogDescription className="text-gray-700">
+              Please connect your wallet to proceed with the verification process.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <WalletMultiButton className="wallet-adapter-button" />
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       {/* Popup Form */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="verification-form relative">
-            <button
-              onClick={() => setShowForm(false)}
-              className="absolute top-4 right-4 text-white hover:text-gray-300"
-            >
-              ✕
-            </button>
-            <h2 className="text-white text-xl mb-4 text-center">JOIN US TODAY</h2>
-            <form onSubmit={handleSubmit}>
-              <input
-                type="text"
-                name="ic"
-                placeholder="IC Number"
-                className="form-input"
-                value={formData.ic}
-                onChange={handleChange}
-                required
-              />
-              <input
-                type="text"
-                name="name"
-                placeholder="Full Name"
-                className="form-input"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-              <input
-                type="email"
-                name="email"
-                placeholder="Email Address"
-                className="form-input"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-              <input
-                type="tel"
-                name="phone"
-                placeholder="Phone Number"
-                className="form-input"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-              />
-              <label className="block text-white mb-1 mt-2">Upload tour guide's license (PDF only)</label>
-              <input
-                type="file"
-                name="motac"
-                accept="application/pdf"
-                className="form-input"
-                onChange={handleFileChange}
-                required
-              />
-              <label className="block text-white mb-1 mt-2">Upload photo ID</label>
-              <input
-                type="file"
-                name="photoId"
-                accept="image/*"
-                className="form-input"
-                onChange={handleFileChange}
-                required
-              />
-              <label className="block text-white mb-1 mt-2">Additional Attachment</label>
-              <input
-                type="file"
-                name="attachment"
-                className="form-input"
-                onChange={handleFileChange}
-              />
-              <div className="mt-4 mb-2">
-                <label className="text-white mr-4">Affiliation:</label>
-                <label className="mr-2">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="agency"
-                    checked={formData.type === 'agency'}
-                    onChange={handleChange}
-                    required
-                  /> Travel Agency
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="type"
-                    value="freelance"
-                    checked={formData.type === 'freelance'}
-                    onChange={handleChange}
-                  /> Freelance
-                </label>
-              </div>
-              {formData.type === 'agency' && (
-                <>
-                  <input
-                    type="text"
-                    name="agencyName"
-                    placeholder="Agency Name"
-                    className="form-input"
-                    value={formData.agencyName}
-                    onChange={handleChange}
-                    required
-                  />
-                  <label className="block text-white mb-1 mt-2">Upload Offer Letter</label>
-                  <input
-                    type="file"
-                    name="offerLetter"
-                    className="form-input"
-                    onChange={handleFileChange}
-                    required
-                  />
-                </>
-              )}
-              <div className="mt-2">
-                <label className="block text-white mb-1">Wallet Address</label>
-                <input
-                  type="text"
-                  name="walletAddress"
-                  className="form-input bg-gray-100"
-                  value={formData.walletAddress}
-                  readOnly
-                />
-                <p className="text-xs text-gray-300 mt-1">Address automatically captured from your connected wallet</p>
-              </div>
-              <button type="submit" className="form-submit w-full mt-4">
-                Submit Verification Request
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#2E3A50] rounded-xl shadow-2xl relative max-w-md w-full overflow-y-auto max-h-[90vh]">
+            <div className="p-6">
+              <button
+                onClick={() => setShowForm(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+                aria-label="Close"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
               </button>
-            </form>
+              
+              <h2 className="text-white text-2xl font-bold mb-6 text-center">Tour Guide Verification</h2>
+              
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="ic" className="block text-gray-300 text-sm font-medium">IC Number</label>
+                  <input
+                    id="ic"
+                    type="text"
+                    name="ic"
+                    placeholder="Enter your IC number"
+                    className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={formData.ic}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="name" className="block text-gray-300 text-sm font-medium">Full Name</label>
+                  <input
+                    id="name"
+                    type="text"
+                    name="name"
+                    placeholder="Enter your full name"
+                    className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="email" className="block text-gray-300 text-sm font-medium">Email Address</label>
+                  <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    placeholder="Enter your email address"
+                    className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="phone" className="block text-gray-300 text-sm font-medium">Phone Number</label>
+                  <input
+                    id="phone"
+                    type="tel"
+                    name="phone"
+                    placeholder="Enter your phone number"
+                    className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="motac" className="block text-gray-300 text-sm font-medium">Tour Guide's License (PDF only)</label>
+                  <div className="flex items-center justify-center w-full">
+                    <label htmlFor="motac" className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg className="w-8 h-8 mb-2 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                          <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                        </svg>
+                        <p className="mb-1 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                        <p className="text-xs text-gray-500">PDF (MAX. 10MB)</p>
+                      </div>
+                      <input 
+                        id="motac" 
+                        type="file" 
+                        name="motac" 
+                        className="hidden" 
+                        accept="application/pdf"
+                        onChange={handleFileChange}
+                        required
+                      />
+                    </label>
+                  </div>
+                  {formData.motac && (
+                    <p className="text-xs text-green-400 mt-1">File selected: {formData.motac.name}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="photoId" className="block text-gray-300 text-sm font-medium">Photo ID</label>
+                  <div className="flex items-center justify-center w-full">
+                    <label htmlFor="photoId" className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg className="w-8 h-8 mb-2 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                          <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                        </svg>
+                        <p className="mb-1 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                        <p className="text-xs text-gray-500">PNG, JPG or JPEG (MAX. 10MB)</p>
+                      </div>
+                      <input 
+                        id="photoId" 
+                        type="file" 
+                        name="photoId" 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        required
+                      />
+                    </label>
+                  </div>
+                  {formData.photoId && (
+                    <p className="text-xs text-green-400 mt-1">File selected: {formData.photoId.name}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="attachment" className="block text-gray-300 text-sm font-medium">Additional Attachment (Optional)</label>
+                  <div className="flex items-center justify-center w-full">
+                    <label htmlFor="attachment" className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg className="w-8 h-8 mb-2 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                          <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                        </svg>
+                        <p className="mb-1 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                        <p className="text-xs text-gray-500">Any file type (MAX. 10MB)</p>
+                      </div>
+                      <input 
+                        id="attachment" 
+                        type="file" 
+                        name="attachment" 
+                        className="hidden" 
+                        onChange={handleFileChange} 
+                      />
+                    </label>
+                  </div>
+                  {formData.attachment && (
+                    <p className="text-xs text-green-400 mt-1">File selected: {formData.attachment.name}</p>
+                  )}
+                </div>
+                
+                <fieldset className="space-y-2">
+                  <legend className="text-gray-300 text-sm font-medium">Affiliation</legend>
+                  <div className="flex space-x-6">
+                    <div className="flex items-center">
+                      <input
+                        id="agency"
+                        type="radio"
+                        name="type"
+                        value="agency"
+                        checked={formData.type === 'agency'}
+                        onChange={handleChange}
+                        required
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <label htmlFor="agency" className="ml-2 block text-sm text-gray-300">
+                        Travel Agency
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        id="freelance"
+                        type="radio"
+                        name="type"
+                        value="freelance"
+                        checked={formData.type === 'freelance'}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <label htmlFor="freelance" className="ml-2 block text-sm text-gray-300">
+                        Freelance
+                      </label>
+                    </div>
+                  </div>
+                </fieldset>
+                
+                {formData.type === 'agency' && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label htmlFor="agencyName" className="block text-gray-300 text-sm font-medium">Agency Name</label>
+                      <input
+                        id="agencyName"
+                        type="text"
+                        name="agencyName"
+                        placeholder="Enter your agency name"
+                        className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        value={formData.agencyName}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label htmlFor="offerLetter" className="block text-gray-300 text-sm font-medium">Offer Letter</label>
+                      <div className="flex items-center justify-center w-full">
+                        <label htmlFor="offerLetter" className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <svg className="w-8 h-8 mb-2 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                            </svg>
+                            <p className="mb-1 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                            <p className="text-xs text-gray-500">PDF or image (MAX. 10MB)</p>
+                          </div>
+                          <input 
+                            id="offerLetter" 
+                            type="file" 
+                            name="offerLetter" 
+                            className="hidden" 
+                            accept="application/pdf,image/*"
+                            onChange={handleFileChange}
+                            required
+                          />
+                        </label>
+                      </div>
+                      {formData.offerLetter && (
+                        <p className="text-xs text-green-400 mt-1">File selected: {formData.offerLetter.name}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="space-y-2">
+                  <label htmlFor="walletAddress" className="block text-gray-300 text-sm font-medium">Wallet Address</label>
+                  <input
+                    id="walletAddress"
+                    type="text"
+                    name="walletAddress"
+                    className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md shadow-sm text-gray-300 cursor-not-allowed"
+                    value={formData.walletAddress}
+                    readOnly
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Address automatically captured from your connected wallet</p>
+                </div>
+                
+                <button 
+                  type="submit" 
+                  className="w-full mt-6 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-md shadow transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+                >
+                  Submit Verification Request
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       )}

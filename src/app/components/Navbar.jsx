@@ -40,9 +40,6 @@ const Navbar = () => {
             <Link href="/#about-us" className="hover:text-blue-300 transition-colors">
               About
             </Link>
-            <Link href="/guides" className="hover:text-blue-300 transition-colors">
-              Guides Directory
-            </Link>
             <button 
               onClick={handleJoinClick}
               className="hover:text-blue-300 transition-colors bg-transparent border-none p-0 text-white"
