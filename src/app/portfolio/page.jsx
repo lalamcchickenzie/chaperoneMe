@@ -20,7 +20,6 @@ export default function PortfolioPage() {
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [useDemoData, setUseDemoData] = useState(false);
 
   useEffect(() => {
     const fetchPortfolio = async () => {
@@ -72,30 +71,15 @@ export default function PortfolioPage() {
               id: `${account.account.authority.toString()}-${account.account.index.toNumber()}`
             }));
           
-          // If no guides found, use demo data
-          if (walletGuides.length === 0) {
-            setUseDemoData(true);
-            setGuides(getDemoGuides(publicKey.toString()));
-          } else {
-            setGuides(walletGuides);
-          }
+          setGuides(walletGuides);
         } catch (error) {
           console.error("Error fetching guide accounts:", error);
-          
-          // Handle the error gracefully
-          toast.error("Failed to fetch blockchain data. Using demo data instead.");
-          
-          // Use mock data if blockchain fetch fails
-          setUseDemoData(true);
-          setGuides(getDemoGuides(publicKey.toString()));
+          toast.error("Failed to fetch blockchain data. Please try again later.");
+          setError("Failed to fetch blockchain data");
         }
       } catch (error) {
         console.error("Error in portfolio page:", error);
         setError(error.message || "Failed to load portfolio data");
-        
-        // Use mock data as fallback
-        setUseDemoData(true);
-        setGuides(getDemoGuides(publicKey.toString()));
       } finally {
         setLoading(false);
       }
@@ -103,33 +87,6 @@ export default function PortfolioPage() {
     
     fetchPortfolio();
   }, [publicKey, connected]);
-  
-  // Demo data generator function
-  const getDemoGuides = (walletAddress) => {
-    return [
-      {
-        id: `${walletAddress.substring(0, 8)}-0`,
-        name: "Demo Guide 1",
-        email: "demo1@example.com",
-        phone: "555-123-4567",
-        photoIdUri: "/download.jpeg",
-        status: "approved",
-        affiliationType: "freelance",
-        walletAddress: walletAddress,
-      },
-      {
-        id: `${walletAddress.substring(0, 8)}-1`,
-        name: "Demo Guide 2",
-        email: "demo2@example.com",
-        phone: "555-987-6543",
-        photoIdUri: "/download.jpeg",
-        status: "approved",
-        affiliationType: "agency",
-        agencyName: "Demo Agency",
-        walletAddress: walletAddress,
-      }
-    ];
-  };
 
   // Show wallet connect prompt if wallet is not connected
   if (!connected) {
@@ -145,7 +102,7 @@ export default function PortfolioPage() {
             </p>
           </div>
           
-          <Card className="max-w-md mx-auto">
+          <Card className="max-w-md mx-auto"> 
             <CardHeader>
               <CardTitle>Connect Your Wallet</CardTitle>
               <CardDescription>Please connect your wallet to view your NFT portfolio</CardDescription>
@@ -171,6 +128,46 @@ export default function PortfolioPage() {
     );
   }
 
+  // Show registration prompt if no NFTs found
+  if (!loading && !error && guides.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Toaster position="top-center" />
+        
+        <div className="max-w-6xl mx-auto px-4 py-12">
+          <div className="text-center mb-12">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Your NFT Portfolio</h1>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              View and manage your verified NFTs linked to your wallet address. These represent your verified credentials as a tour guide.
+            </p>
+          </div>
+          
+          <Card className="max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle>No NFTs Found</CardTitle>
+              <CardDescription>You don't have any verified guide NFTs linked to your wallet yet</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center">
+              <Image 
+                src="/empty-state.svg" 
+                alt="No NFTs Found" 
+                width={120} 
+                height={120}
+                className="mb-6 opacity-70"
+              />
+              <p className="text-center text-gray-600 mb-6">
+                Register as a verified tour guide to receive your NFT credential.
+              </p>
+              <Link href="/register">
+                <Button className="w-full">Register as a Guide</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-center" />
@@ -181,13 +178,6 @@ export default function PortfolioPage() {
           <p className="text-gray-600 max-w-2xl mx-auto">
             View and manage your verified NFTs linked to your wallet address. These represent your verified credentials as a tour guide.
           </p>
-          {useDemoData && (
-            <div className="mt-3">
-              <span className="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">
-                Demo Mode: Showing sample data
-              </span>
-            </div>
-          )}
         </div>
         
         {loading ? (
