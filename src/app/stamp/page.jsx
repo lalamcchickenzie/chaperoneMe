@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import StampCard from '../components/StampCard';
+import StampCard from '../../components/StampCard';
 
 export default function StampPage() {
   const [showConnected, setShowConnected] = useState(false);

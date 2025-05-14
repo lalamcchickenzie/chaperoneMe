@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import StampCard from './components/StampCard';
-import Navbar from './components/Navbar';
+import StampCard from '../components/StampCard';
+import Navbar from '../components/Navbar';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
 import toast, { Toaster } from 'react-hot-toast';

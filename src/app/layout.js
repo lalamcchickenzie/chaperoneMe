@@ -1,7 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { WalletProvider } from "./components/wallet-provider";
-import Navbar from "./components/Navbar";
+import { WalletProvider } from "../components/wallet-provider";
+import Navbar from "../components/Navbar";
 import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({

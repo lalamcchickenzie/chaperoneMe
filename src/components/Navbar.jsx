@@ -3,10 +3,13 @@
 import { useState } from 'react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
+import Link from 'next/link';
 
 export default function Navbar() {
   const { publicKey } = useWallet();
   const [showWalletPrompt, setShowWalletPrompt] = useState(false);
+  // Admin wallet address that can see the verify page
+  const ADMIN_WALLET = "GsjREUyUEkFRAhoSj1q9Tg4tPGCyoEAoTyFiZjqxKD92";
 
   const handleJoinClick = () => {
     if (publicKey) {
@@ -17,6 +20,8 @@ export default function Navbar() {
     }
   };
 
+  const isAdmin = publicKey?.toString() === ADMIN_WALLET;
+
   return (
     <>
       <nav className="flex justify-between items-center p-4 bg-[#1A2A3A]">
@@ -24,6 +29,9 @@ export default function Navbar() {
           <a href="/" className="nav-link">HOME</a>
           <a href="#about-us" className="nav-link">ABOUT US</a>
           <a href="#" className="nav-link" onClick={handleJoinClick}>JOIN US TODAY</a>
+          {isAdmin && (
+            <Link href="/verify" className="nav-link">VERIFY</Link>
+          )}
         </div>
         <div className="wallet-adapter-dropdown">
           <WalletMultiButton className="wallet-adapter-button" />

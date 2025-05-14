@@ -1,4 +1,4 @@
-import StampCard from '../components/StampCard';
+import StampCard from '../../components/StampCard';
 
 export default function GuidesPage() {
   return (
