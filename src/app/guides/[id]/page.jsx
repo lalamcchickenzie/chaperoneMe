@@ -12,6 +12,7 @@ import * as anchor from '@coral-xyz/anchor';
 import programIDL from '@/contract/idl.json';
 import { PROGRAM_ACCOUNT_ADDRESS, WEBSITE_URL } from '@/lib/config';
 import toast, { Toaster } from 'react-hot-toast';
+import { Metaplex } from '@metaplex-foundation/js';
 
 export default function GuideProfilePage({ params }) {
   const router = useRouter();
@@ -80,15 +81,98 @@ export default function GuideProfilePage({ params }) {
         
         // If the guide is approved, try to fetch their NFT metadata
         if (guide.status === 'approved') {
-          // This would be a simplified approach - in a real app, you'd query the blockchain
-          // for NFTs owned by the guide's walletAddress
           try {
-            // Mock NFT metadata fetch - in a real app you'd use Metaplex or another service
-            // to fetch the actual NFT metadata
+            // Try to find the guide's NFT based on their wallet address or authority
+            const walletAddress = guide.walletAddress 
+              ? new anchor.web3.PublicKey(guide.walletAddress)
+              : new anchor.web3.PublicKey(guide.authority); // fallback to authority if walletAddress not available
+            
+            console.log("Guide wallet address:", guide.walletAddress || "Not available, using authority");
+            console.log("Guide authority:", guide.authority);
+            console.log("Guide index:", guide.index);
+            
+            // First approach: Try to fetch NFTs owned by this wallet
+            try {
+              const metaplex = Metaplex.make(connection);
+              console.log("Trying to find NFTs owned by wallet:", walletAddress.toString());
+              
+              // Get token accounts owned by guide's wallet
+              const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+                walletAddress,
+                {
+                  programId: new anchor.web3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'), // Token program ID
+                }
+              );
+              
+              console.log(`Found ${tokenAccounts.value.length} token accounts for wallet ${walletAddress.toString()}`);
+              
+              // Look through these accounts for NFTs (tokens with amount 1)
+              const potentialNfts = tokenAccounts.value.filter(account => {
+                const amount = account.account.data.parsed.info.tokenAmount;
+                return amount.amount === "1" && amount.decimals === 0;
+              });
+              
+              console.log(`Found ${potentialNfts.length} potential NFTs owned by guide`);
+              
+              // Check each potential NFT to find the one related to this guide
+              for (const nftAccount of potentialNfts) {
+                const mintAddress = nftAccount.account.data.parsed.info.mint;
+                console.log("Checking mint:", mintAddress);
+                
+                try {
+                  const nft = await metaplex.nfts().findByMint({ mintAddress: new anchor.web3.PublicKey(mintAddress) });
+                  
+                  // Check if this NFT seems to be a guide verification NFT
+                  if (nft && nft.name && (
+                      nft.name.includes(guide.name) || 
+                      nft.name.includes("Verified Tour Guide") ||
+                      nft.name.includes("Guide")
+                    )) {
+                    console.log("Found matching NFT by name:", nft);
+                    
+                    const metadata = await fetch(nft.uri)
+                      .then(res => res.json())
+                      .catch(() => null);
+                    
+                    // If metadata has guide info, we likely found the right NFT
+                    const isMatchingNft = metadata && (
+                      metadata.attributes?.some(attr => 
+                        (attr.trait_type === "IC Number" && attr.value === guide.icNumber) ||
+                        (attr.trait_type === "Name" && attr.value === guide.name)
+                      )
+                    );
+                    
+                    if (isMatchingNft || !metadata) {
+                      const nftMetadataObj = {
+                        name: nft.name || `Verified Tour Guide: ${guide.name}`,
+                        image: metadata?.image || guide.photoIdUri || '/placeholder-image.png',
+                        mintAddress: mintAddress,
+                        attributes: metadata?.attributes || [
+                          { trait_type: "License Number", value: guide.icNumber },
+                          { trait_type: "Verification Status", value: "Verified" },
+                          { trait_type: "Affiliation Type", value: guide.affiliationType },
+                        ]
+                      };
+                      
+                      setNftMetadata(nftMetadataObj);
+                      return;
+                    }
+                  }
+                } catch (err) {
+                  console.error(`Error checking NFT ${mintAddress}:`, err);
+                }
+              }
+              
+              console.log("No matching NFT found through wallet ownership");
+            } catch (walletNftError) {
+              console.error("Error finding NFTs by wallet:", walletNftError);
+            }
+            
+            // If we've reached here, we didn't find the NFT, so fall back to mock data
             const mockNftMetadata = {
               name: `Verified Tour Guide: ${guide.name}`,
               image: guide.photoIdUri || '/placeholder-image.png',
-              mintAddress: 'mock-mint-address-' + Math.random().toString(36).substring(2, 15),
+              mintAddress: "NFT address not found",
               attributes: [
                 { trait_type: "License Number", value: guide.icNumber },
                 { trait_type: "Verification Status", value: "Verified" },
@@ -98,7 +182,7 @@ export default function GuideProfilePage({ params }) {
             
             setNftMetadata(mockNftMetadata);
           } catch (nftError) {
-            console.error("Error fetching NFT metadata:", nftError);
+            console.error("Error handling NFT data:", nftError);
             // Non-critical error, so we won't set the main error state
           }
         }
@@ -114,10 +198,12 @@ export default function GuideProfilePage({ params }) {
           phone: "123-456-7890",
           icNumber: "123456-78-9012",
           walletAddress: "DEmocGpdzhshJ19XVhCDd8JRgi8qzYE9eWzTVgFFWMrA",
+          authority: "DEmocGpdzhshJ19XVhCDd8JRgi8qzYE9eWzTVgFFWMrA",
           licenseUri: "https://plum-tough-mongoose-147.mypinata.cloud/ipfs/QmExample",
           photoIdUri: "/download.jpeg",
           status: "approved",
           affiliationType: "freelance",
+          index: 0,
         });
       } finally {
         setLoading(false);
@@ -349,14 +435,21 @@ export default function GuideProfilePage({ params }) {
                       <div className="mt-4 pt-3 border-t border-gray-200">
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-gray-500">NFT ID: {nftMetadata.mintAddress}</span>
-                          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => {
-                            toast.success('NFT details copied to clipboard!');
-                          }}>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                            </svg>
-                            Copy NFT Details
-                          </Button>
+                          <div className="flex space-x-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-8 text-xs"
+                              onClick={() => {
+                                window.open(`https://solscan.io/token/${nftMetadata.mintAddress}?cluster=devnet`, '_blank');
+                              }}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                              View on Solscan
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
