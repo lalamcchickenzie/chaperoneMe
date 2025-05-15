@@ -1,36 +1,197 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# ChaperoneMe
 
-## Getting Started
+ChaperoneMe is a decentralized platform for tour guide verification and credential management built on the Solana blockchain. The platform ensures safe and authentic travel experiences by connecting travelers with thoroughly vetted local guides.
 
-First, run the development server:
+## Features
+
+- Tour guide verification and credential management
+- NFT-based credential system
+- Admin verification panel
+- Guide portfolio management
+- Wallet integration with multiple Solana wallets
+- Real-time verification status updates
+- Secure document upload and storage
+
+## Tech Stack
+
+- **Frontend**: Next.js 14, React 18
+- **Blockchain**: Solana (Devnet)
+- **Smart Contracts**: Anchor Framework
+- **UI Components**: 
+  - Tailwind CSS
+  - Radix UI
+  - Shadcn UI
+- **Wallet Integration**: 
+  - Phantom
+  - Solflare
+  - Ledger
+- **Storage**: IPFS (via Pinata)
+
+## Prerequisites
+
+- Node.js (v16 or higher)
+- npm or yarn
+- Solana CLI tools
+- A Solana wallet (Phantom, Solflare, or Ledger)
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone [repository-url]
+cd chaperoneme
+```
+
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+```
+
+3. Create a `.env.local` file in the root directory and add your environment variables:
+```env
+NEXT_PUBLIC_SOLANA_NETWORK=devnet
+NEXT_PUBLIC_PROGRAM_ID=your_program_id
+```
+
+## Development
+
+Can be accessed through the website or run through the development server.
+
+# ChaperoneMe User Guide
+
+## How to Access and Use ChaperoneMe (chaperoneme.vercel.app)
+
+### 1. Initial Access
+- Visit chaperoneme.vercel.app in your web browser
+- OR To run the development server:
 
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- You'll see the main landing page with the tagline "CHAPERONEME: DO NOT FRET, YOU GET VERIFIED!"
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### 2. Connect Your Wallet
+- Click the "Connect Wallet" button in the top right corner
+- Choose from supported wallets:
+  - Phantom
+  - Solflare
+  - Ledger
+- Make sure your wallet is connected to Solana Devnet
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. For Tour Guides (Wanting to Get Verified)
+- Click "Join Us" in the navigation bar
+- You'll need to provide:
+  - Personal Information:
+    - IC (Identification Card number)
+    - Name
+    - Email
+    - Phone number
+  - Required Documents:
+    - MOTAC License
+    - Photo ID
+    - Additional attachments (optional)
+  - For Agency Guides:
+    - Agency Name
+    - Offer Letter
+- Submit your application
+- Wait for admin verification
 
-## Learn More
+### 4. For Travelers (Wanting to Verify Guides)
+- Navigate to the "Guides" section
+- View available verified guides
+- Click on a guide's card to:
+  - View their credentials
+  - Scan their verification QR code
+  - Check their verification status
 
-To learn more about Next.js, take a look at the following resources:
+### 5. For Verified Guides
+- After verification, access your "Portfolio" page
+- View your NFT credentials
+- Manage your verification status
+- Share your verification QR code with potential clients
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 6. For Admins
+- Connect with the authorized admin wallet
+- Access the admin panel at `/verify`
+- Review and approve guide verification requests
+- Manage guide portfolios
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Important Notes
+- Make sure you have a Solana wallet installed (Phantom, Solflare, or Ledger)
+- The platform operates on Solana Devnet, so you'll need Devnet SOL for transactions
+- Keep your wallet secure and never share your private keys
+- All document uploads are secured and stored on IPFS
+- Verification process may take some time as it requires manual review
 
-## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Key Features Implementation
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Guide Verification
+- Tour guides can submit their credentials for verification
+- Required documents: License, Photo ID, and additional attachments
+- Admin panel for verification review and approval
+
+### NFT Credentials
+- Verified guides receive NFT credentials
+- Credentials are stored on-chain and can be viewed in the portfolio
+- QR code verification system for real-time credential checking
+
+### Admin Features
+- Secure admin panel for guide verification
+- Initialization process for admin account
+- Guide portfolio management
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For support, please open an issue in the GitHub repository or contact the development team.
+
+## Key Features Implementation
+
+### Guide Verification
+- Tour guides can submit their credentials for verification
+- Required documents: License, Photo ID, and additional attachments
+- Admin panel for verification review and approval
+
+### NFT Credentials
+- Verified guides receive NFT credentials
+- Credentials are stored on-chain and can be viewed in the portfolio
+- QR code verification system for real-time credential checking
+
+### Admin Features
+- Secure admin panel for guide verification
+- Initialization process for admin account
+- Guide portfolio management
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For support, please open an issue in the GitHub repository or contact the development team.
