@@ -130,19 +130,6 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - Verification process may take some time as it requires manual review
 
 
-## Project Structure
-chaperoneme/
-├── src/
-│ ├── app/ # Next.js app directory
-│ │ ├── components/ # Reusable UI components
-│ │ ├── verify/ # Verification page
-│ │ ├── portfolio/ # Guide portfolio page
-│ │ └── initialize/ # Admin initialization page
-│ ├── contract/ # Smart contract files
-│ └── lib/ # Utility functions and configs
-├── public/ # Static assets
-└── package.json # Project dependencies
-
 ## Key Features Implementation
 
 ### Guide Verification
